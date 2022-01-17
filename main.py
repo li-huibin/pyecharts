@@ -8,6 +8,8 @@ from zhejiang import ZJ
 
 if __name__ == '__main__':
     # 基于Map构建浙江地图
-    ZJ.zhejiang_map()
+    # ZJ.zhejiang_map()
     # 生成浙江省所有城市地图
-    ZJ.zhangjiang_cities_map()
+    # ZJ.zhangjiang_cities_map()
+
+    ZJ.zhejiang_map_all()
