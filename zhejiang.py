@@ -1,3 +1,4 @@
+import logging
 import os.path
 import random
 
@@ -50,51 +51,39 @@ class ZJ:
     @staticmethod
     def values(rge, start: int = 20, end: int = 150) -> list:
         ar = [random.randint(start, end) for _ in range(rge)]
-        print(ar)
         return ar
 
     # 浙江地图基于Map构建
     @staticmethod
     def zhejiang_map():
+        logging.info("正在导出浙江全省城市地图...")
         html_path = "./html/map_zhejiang.html"
         if os.path.exists(html_path):
             os.remove(html_path)
         with open("./geojson/zhejiang_geojson.json", "r", encoding="utf-8") as file:
             stream = file.read()
         Map().add_js_funcs("echarts.registerMap('浙江省',{});".format(stream)) \
-            .add("商家A", [list(z) for z in zip(ZJ.zhejiang_dic.values(), ZJ.values(11, 20, 150))], "浙江省") \
+            .add("商家A", [list(z) for z in zip(ZJ.zhejiang_dic.values(), ZJ.values(len(ZJ.zhejiang_dic), 20, 150))], "浙江省") \
             .set_global_opts(
             title_opts=opts.TitleOpts(title="Map-浙江省地图"), visualmap_opts=opts.VisualMapOpts()
         ) \
             .render(html_path)
-        return
-
-    # 杭州地图基于Map构建
-    @staticmethod
-    def hangzhou_map():
-        html_path = "./html/map_zhejiang.html"
-        if os.path.exists(html_path):
-            os.remove(html_path)
-        with open("./geojson/hangzhou_geojson.json", "r", encoding="utf-8") as file:
-            stream = file.read()
-        Map().add_js_funcs("echarts.registerMap('杭州市',{});".format(stream)) \
-            .add("商家A", [list(z) for z in zip(ZJ.hangzhou, ZJ.values(13, 20, 150))], "杭州市") \
-            .set_global_opts(
-            title_opts=opts.TitleOpts(title="Map-杭州市地图"), visualmap_opts=opts.VisualMapOpts()
-        ) \
-            .render(html_path)
+        logging.info("浙江全省城市地图导出完成，文件路径:{}".format(html_path))
         return
 
     # 批量生成浙江全省城市地图
     @staticmethod
     def zhangjiang_cities_map():
+        logging.info("正在批量导出全省所有城市地图...")
         for city in ZJ.zhejiang_dic.keys():
             ZJ.city_map(city)
+        logging.info("全省所有城市地图导出完成")
         return
 
     # 生成城市地图
     # city 城市拼音
     def city_map(city):
+        logging.info("正在导出{}地图...".format(city))
         html_path = "./html/map_{}.html".format(city)
         if os.path.exists(html_path):
             os.remove(html_path)
@@ -102,13 +91,15 @@ class ZJ:
         with open(geojson_path, "r", encoding="utf-8") as file:
             stream = file.read()
         Map().add_js_funcs("echarts.registerMap('{}',{});".format(ZJ.zhejiang_dic.get(city), stream)) \
-            .add("商家A", [list(z) for z in zip(ZJ.zhejiang_city_dic.get(city), ZJ.values(13, 20, 150))],
+            .add("商家A", [list(z) for z in zip(ZJ.zhejiang_city_dic.get(city), ZJ.values(
+            len(ZJ.zhejiang_city_dic.get(city)), 20, 150))],
                  ZJ.zhejiang_dic.get(city)) \
             .set_global_opts(
             title_opts=opts.TitleOpts(title="Map-{}地图".format(ZJ.zhejiang_dic.get(city))),
             visualmap_opts=opts.VisualMapOpts()
         ) \
             .render(html_path)
+        logging.info("{}地图导出完成，文件路径:{}".format(city,html_path))
         return
 
 
