@@ -4,7 +4,8 @@ import random
 
 from pyecharts import options as opts
 from pyecharts.charts import Geo, Map
-
+from pyecharts.globals import CurrentConfig
+CurrentConfig.ONLINE_HOST = "http://127.0.0.1:8000/assets/"
 
 class ZJ:
     # zhejiang_city = ["杭州市", "宁波市", "温州市", "嘉兴市", "湖州市", "绍兴市", "金华市", "衢州市", "舟山市", "台州市", "丽水市"]
@@ -135,5 +136,48 @@ class ZJ:
         print("{}地图导出完成，文件路径:{}".format(city, html_path))
         return
 
+    ''' 加载excel中的数据，最终数据 区县-数据 做映射的，保存在变量dic_data中
+          :param path 文件路径
+    '''
+
+    def load_data(path):
+        wb = xlrd.open_workbook(path)
+        # 创建字典key并且填充字典key对应的值
+        for sheet_idx in range(len(wb.sheets())):
+            sheet = wb.sheet_by_index(sheet_idx)
+            data = {}
+            for idx in range(sheet.nrows):
+                if idx > 0:
+                    data.setdefault(sheet.cell(idx, 1).value, sheet.cell(idx, 6).value)
+            ZJ.dic_data.setdefault(sheet_idx, data)
+        print(ZJ.dic_data)
+        return len(wb.sheets())
+
+    # 生成全省动态图
+    def zhejiang_sync_data(path):
+        width = '1000px'
+        height = '900px'
+        tl = Timeline(init_opts=opts.InitOpts(width=width, height=height)) \
+            .add_schema(orient='vertical', is_auto_play=True, is_timeline_show=True)
+        wb = xlrd.open_workbook(path)
+        for idx in range(len(wb.sheets())):
+            with open("./geojson/zhejiang_cities_districts_geojson.json", "r", encoding="utf-8") as file:
+                stream = file.read()
+            keys = []
+            values = []
+            for i in range(wb.sheet_by_index(idx).nrows):
+                if i > 0:
+                    keys.append(wb.sheet_by_index(idx).cell(i, 1).value)
+                    values.append(wb.sheet_by_index(idx).cell(i, 6).value)
+
+            map0 = Map(init_opts=opts.InitOpts(width=width, height=height)) \
+                .add_js_funcs("echarts.registerMap('浙江省',{});".format(stream)) \
+                .add("商家A", [list(z) for z in zip(keys, values)], "浙江", min_scale_limit=1) \
+                .set_global_opts(title_opts=opts.TitleOpts(title="Map-浙江省地图"),
+                                 visualmap_opts=opts.VisualMapOpts(max_=100, is_piecewise=True)
+                                 )
+            tl.add(map0, "{}年".format(idx))
+        tl.render("html/timeline_map.html")
+        return
 
 zhejiang = ZJ()
